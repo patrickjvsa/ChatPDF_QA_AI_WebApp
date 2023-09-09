@@ -2,12 +2,10 @@ import streamlit as st
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 import os
-import pandas as pd
 
 # necesario (al menos en mi pc) para conectarse a la api de openai sin errores
-os.environ['REQUESTS_CA_BUNDLE'] = 'openai_web_certificate.crt'
+# os.environ['REQUESTS_CA_BUNDLE'] = 'openai_web_certificate.crt'
 
-# para leer un archivo
 def load_document(file):
 
     import os
@@ -38,7 +36,7 @@ def load_document(file):
 
     return data
 
-# dividir en chunks
+
 def chunk_data(data, chunk_size=256, chunk_overlap=20):
 
     from langchain.text_splitter import RecursiveCharacterTextSplitter
@@ -48,7 +46,7 @@ def chunk_data(data, chunk_size=256, chunk_overlap=20):
 
     return chunks
 
-# calcular costo por token
+
 def calculate_embedding_cost(texts):
 
     import tiktoken
@@ -59,7 +57,6 @@ def calculate_embedding_cost(texts):
 
     return total_tokens, embedding_cost
 
-# para crear embeddings a partir de los chunks de texto
 def create_embeddings(index_name):
 
     from langchain.vectorstores import Chroma
@@ -72,13 +69,6 @@ def create_embeddings(index_name):
     vector_store.persist()
 
     return vector_store
-
-######################################################################################################################
-
-# pregunta y respuesta
-
-# modelos sencillos: askLIGHT detecta el problema en base a los retrieved chunks, inferLIGHT infiere causas posibles para el
-#                    problema detectado por el primero.
 
 def ask(vector_store, query, context_for_query, k=3, temperature=1):
 
@@ -106,7 +96,6 @@ def ask(vector_store, query, context_for_query, k=3, temperature=1):
     chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever, chain_type='stuff')
 
     return chain.run(query)
-
 
 def askPRO(vector_store, query, context_for_query, edited_df, k=3, temperature=1):
 
@@ -165,15 +154,14 @@ def askPRO(vector_store, query, context_for_query, edited_df, k=3, temperature=1
 
     return chain.run(query)
 
-
-# limpia el historial de la webapp de Streamlit
 def clear_history():
 
     if 'history' in st.session_state:
         del st.session_state['history']
 
+def main():
     # necesario en mi pc para que se conecte a la api de openai
-    os.environ['REQUESTS_CA_BUNDLE'] = 'openai_web_certificate.crt'
+    #os.environ['REQUESTS_CA_BUNDLE'] = 'openai_web_certificate.crt'
 
     # cargar api_key
     from dotenv import load_dotenv, find_dotenv
@@ -186,6 +174,7 @@ def clear_history():
 
         env_api_key = os.getenv('OPENAI_API_KEY')
 
+        api_key = st.text_input('OpenAI API key:', value=env_api_key, type='password', on_change=clear_history)
 
         # si reescribes la clave
         if api_key:
@@ -195,14 +184,15 @@ def clear_history():
         uploaded_file = st.file_uploader('Subir un archivo nuevo:', type=['pdf', 'docx', 'txt'])
 
         # chunk size
-        chunk_size = st.number_input('Embedding chunk size:', min_value=100, max_value=2048, value=512, on_change=clear_history)
+        chunk_size = st.number_input('Embedding chunk size:', min_value=100, max_value=2048, value=512,
+                                     on_change=clear_history)
 
         # añadir
         add_data = st.button('Añadir', on_click=clear_history)
 
         # si no ha apretado el boton de añadir pero el vector db del archivo si está cargado
         if not add_data:
-            if  os.path.exists('db'):
+            if os.path.exists('db'):
                 st.success('Ya existe un archivo en memoria. Añadir otro lo sobreescribirá.')
 
         # se sube un archivo
@@ -235,13 +225,13 @@ def clear_history():
         # temperatura del llm
         temperature = st.slider('LLM temperature:', min_value=0.0, max_value=2.0, value=0.4, on_change=clear_history)
 
+        # rol
 
     context_input = st.text_area('Tu rol es..')
 
     # query del usuario
     q = st.text_area('Inserte pregunta u observación...',
-                                         height=160)
-
+                     height=160)
 
     is_button_pressed = st.button('Generar respuesta')
 
@@ -268,6 +258,8 @@ def clear_history():
                 st.text_area('Problema detectado: ', value=answer1, height=300)
 
                 with st.expander('Fuentes (chunks retrieved)'):
+                    for r in result1:
+                        st.write(r.page_content + '\n')
 
                 st.divider()
 
@@ -285,5 +277,8 @@ def clear_history():
                 with st.expander('Historial'):
                     st.text_area(label='Historial', value=h, key='history', height=400)
 
+
+if __name__ == "__main__":
+    main()
 # para correr la app en terminal: streamlit run ./model.py
 
