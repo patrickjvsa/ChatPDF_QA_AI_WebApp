@@ -1,0 +1,8 @@
+openai
+langchain~=0.0.278
+pypdf
+streamlit~=1.26.0
+chromadb
+tiktoken
+pandas~=2.1.0
+python-dotenv~=1.0.0
