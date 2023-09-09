@@ -3,9 +3,10 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.vectorstores import Chroma
 import os
 
+
 # necesario (al menos en mi pc) para conectarse a la api de openai sin errores
 # os.environ['REQUESTS_CA_BUNDLE'] = 'openai_web_certificate.crt'
-
+api_key = os.getenv('OPENAI_API_KEY')
 def load_document(file):
 
     import os
@@ -97,7 +98,7 @@ def ask(vector_store, query, context_for_query, k=3, temperature=1):
 
     return chain.run(query)
 
-def askPRO(vector_store, query, context_for_query, edited_df, k=3, temperature=1):
+def askPRO(vector_store, query, context_for_query, k=3, temperature=1):
 
     from langchain.chains.router import MultiRetrievalQAChain
     from langchain.chat_models import ChatOpenAI
@@ -107,10 +108,7 @@ def askPRO(vector_store, query, context_for_query, edited_df, k=3, temperature=1
 
     # obtengo el df que está en la interfaz y lo integro como fuente de información (retriever)
 
-    edited_df_str = edited_df.to_dict()
-    edited_df_str = str(edited_df_str)
-
-    metric_data = Chroma.from_texts(edited_df_str, OpenAIEmbeddings()).as_retriever()
+    metric_data = Chroma.from_texts(OpenAIEmbeddings()).as_retriever()
 
     # sumo el db que contiene el pdf como retriever
 
@@ -163,6 +161,8 @@ def main():
     # necesario en mi pc para que se conecte a la api de openai
     #os.environ['REQUESTS_CA_BUNDLE'] = 'openai_web_certificate.crt'
 
+    api_key = os.getenv('OPENAI_API_KEY')
+
     # cargar api_key
     from dotenv import load_dotenv, find_dotenv
     load_dotenv(find_dotenv(), override=True)
@@ -172,9 +172,7 @@ def main():
     with st.sidebar:
         # text_input para la api_key
 
-        env_api_key = os.getenv('OPENAI_API_KEY')
-
-        api_key = st.text_input('OpenAI API key:', value=env_api_key, type='password', on_change=clear_history)
+        api_key = st.text_input('OpenAI API key:', value=api_key, type='password', on_change=clear_history)
 
         # si reescribes la clave
         if api_key:
@@ -219,12 +217,6 @@ def main():
 
         st.divider()
 
-        # k number del retriever
-        k = st.slider('Retriever k number:', min_value=1, max_value=10, value=3, on_change=clear_history)
-
-        # temperatura del llm
-        temperature = st.slider('LLM temperature:', min_value=0.0, max_value=2.0, value=0.4, on_change=clear_history)
-
         # rol
 
     context_input = st.text_area('Tu rol es..')
@@ -232,6 +224,14 @@ def main():
     # query del usuario
     q = st.text_area('Inserte pregunta u observación...',
                      height=160)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        # temperatura del llm
+        temperature = st.slider('Creatividad:', min_value=0.0, max_value=2.0, value=1.0, on_change=clear_history)
+    with col2:
+        # k number del retriever
+        k = 3 # st.slider('Trozos de textos recogidos:', min_value=1, max_value=10, value=3, on_change=clear_history)
 
     is_button_pressed = st.button('Generar respuesta')
 
@@ -280,5 +280,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 # para correr la app en terminal: streamlit run ./model.py
 
