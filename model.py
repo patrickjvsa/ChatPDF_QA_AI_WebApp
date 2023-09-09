@@ -172,9 +172,6 @@ def clear_history():
     if 'history' in st.session_state:
         del st.session_state['history']
 
-
-if __name__ == "__main__":
-
     # necesario en mi pc para que se conecte a la api de openai
     os.environ['REQUESTS_CA_BUNDLE'] = 'openai_web_certificate.crt'
 
@@ -189,12 +186,10 @@ if __name__ == "__main__":
 
         env_api_key = os.getenv('OPENAI_API_KEY')
 
-        api_key = st.text_input('OpenAI API key:', value = env_api_key ,type='password', on_change=clear_history)
 
         # si reescribes la clave
         if api_key:
             os.environ['OPENAI_API_KEY'] = api_key
-
 
         # widget para subir archivo
         uploaded_file = st.file_uploader('Subir un archivo nuevo:', type=['pdf', 'docx', 'txt'])
@@ -213,8 +208,6 @@ if __name__ == "__main__":
         # se sube un archivo
         if uploaded_file and add_data:
             with st.spinner('Leyendo...'):
-
-
                 bytes_data = uploaded_file.read()
                 file_name = os.path.join('./', uploaded_file.name)
 
@@ -242,7 +235,6 @@ if __name__ == "__main__":
         # temperatura del llm
         temperature = st.slider('LLM temperature:', min_value=0.0, max_value=2.0, value=0.4, on_change=clear_history)
 
-        #rol
 
     context_input = st.text_area('Tu rol es..')
 
@@ -258,7 +250,6 @@ if __name__ == "__main__":
 
         # si los datos del archivo no han sido cargados en la sesion de Streamlit
         if 'vs' not in st.session_state:
-
             # cargar
             embedding = OpenAIEmbeddings(openai_api_key=api_key)
             vector_store = Chroma(persist_directory="db", embedding_function=embedding)
@@ -277,8 +268,6 @@ if __name__ == "__main__":
                 st.text_area('Problema detectado: ', value=answer1, height=300)
 
                 with st.expander('Fuentes (chunks retrieved)'):
-                        for r in result1:
-                            st.write(r.page_content + '\n')
 
                 st.divider()
 
